@@ -18,6 +18,15 @@ body {
   display: none !important;
 }
 
+/* Hide Next.js development badge */
+#nextjs-portal {
+  display: none !important;
+}
+
+[data-nextjs-dev-tools] {
+  display: none !important;
+}
+
 /* TipTap Editor Styles */
 .tiptap {
   outline: none;
