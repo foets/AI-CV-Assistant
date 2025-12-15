@@ -69,76 +69,45 @@ export default function ProfilePage() {
     try {
       const res = await fetch("/api/profile");
       const data = await res.json();
-      setContent(data.content || "");
+      const newContent = data.content || "";
+      console.log('Fetched profile content:', newContent.substring(0, 100) + '...');
+      setContent(newContent);
       setIsLoaded(true);
+
+      // Force editor update if it's already loaded
+      if (editor && isLoaded) {
+        console.log('Updating editor content...');
+        editor.commands.setContent(markdownToHtml(newContent));
+      }
     } catch (error) {
       console.error("Failed to fetch profile:", error);
       setIsLoaded(true);
     }
-  }, []);
+  }, [editor, isLoaded, markdownToHtml]);
 
   useEffect(() => {
-    // Check if profile needs refresh from previous updates
-    const needsRefresh = sessionStorage.getItem('profileNeedsRefresh') === 'true';
-    if (needsRefresh) {
-      sessionStorage.removeItem('profileNeedsRefresh');
-      // Small delay to ensure any pending updates are complete
-      setTimeout(() => fetchProfile(), 100);
-    } else {
-      fetchProfile();
-    }
-  }, [fetchProfile]);
-
-  // Listen for real-time profile update events
-  useEffect(() => {
-    const handleProfileUpdate = () => {
-      // Refresh profile data immediately when updated via chat
-      fetchProfile();
-    };
-
-    window.addEventListener('profileUpdated', handleProfileUpdate);
-
-    return () => {
-      window.removeEventListener('profileUpdated', handleProfileUpdate);
-    };
+    // Initial profile load
+    fetchProfile();
   }, [fetchProfile]);
 
   // Listen for profile update events from chat
   useEffect(() => {
     const handleProfileUpdate = () => {
+      console.log('Profile update event received, refreshing...');
       // Refresh profile data when chat updates it
       fetchProfile();
     };
 
-    // Check if profile was updated while we were away (on page focus/visibility)
-    const handleVisibilityChange = () => {
-      if (!document.hidden) {
-        const lastUpdated = localStorage.getItem('profileLastUpdated');
-        if (lastUpdated) {
-          const lastUpdateTime = parseInt(lastUpdated);
-          const now = Date.now();
-          // If updated in the last 10 seconds, refresh
-          if (now - lastUpdateTime < 10000) {
-            fetchProfile();
-            // Clear the timestamp to avoid repeated refreshes
-            localStorage.removeItem('profileLastUpdated');
-          }
-        }
-      }
-    };
-
-    // Listen for real-time updates
     window.addEventListener('profileUpdated', handleProfileUpdate);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
       window.removeEventListener('profileUpdated', handleProfileUpdate);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [fetchProfile]);
 
   useEffect(() => {
     if (editor && isLoaded && content) {
+      console.log('Editor useEffect triggered, updating content...');
       editor.commands.setContent(markdownToHtml(content));
     }
   }, [editor, isLoaded, content, markdownToHtml]);
@@ -305,6 +274,7 @@ export default function ProfilePage() {
             </div>
           ) : (
             <EditorContent
+              key={`editor-${content?.substring(0, 50)}`} // Force re-render when content changes
               editor={editor}
               className="prose prose-slate max-w-none focus:outline-none"
             />

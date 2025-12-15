@@ -61,6 +61,7 @@ export function Sidebar() {
 
       // If profile was updated, store flag and emit event
       if (data.profileUpdated) {
+        console.log('Profile updated detected, emitting event...');
         sessionStorage.setItem('profileNeedsRefresh', 'true');
         window.dispatchEvent(new CustomEvent('profileUpdated'));
       }
