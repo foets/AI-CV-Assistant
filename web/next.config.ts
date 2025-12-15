@@ -7,11 +7,12 @@ const nextConfig: NextConfig = {
   },
   // Suppress hydration warnings for editor
   reactStrictMode: false,
-  // Hide Next.js dev indicators
-  devIndicators: {
-    appIsrStatus: false,
-    buildActivity: false,
-    buildActivityPosition: 'bottom-right',
+  // Hide Next.js dev indicators completely
+  devIndicators: false,
+  // Additional experimental flags to disable dev indicators
+  experimental: {
+    // Disable dev overlay
+    appDocumentPreloading: false,
   },
 };
 
