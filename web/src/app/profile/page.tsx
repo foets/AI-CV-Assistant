@@ -78,7 +78,29 @@ export default function ProfilePage() {
   }, []);
 
   useEffect(() => {
-    fetchProfile();
+    // Check if profile needs refresh from previous updates
+    const needsRefresh = sessionStorage.getItem('profileNeedsRefresh') === 'true';
+    if (needsRefresh) {
+      sessionStorage.removeItem('profileNeedsRefresh');
+      // Small delay to ensure any pending updates are complete
+      setTimeout(() => fetchProfile(), 100);
+    } else {
+      fetchProfile();
+    }
+  }, [fetchProfile]);
+
+  // Listen for real-time profile update events
+  useEffect(() => {
+    const handleProfileUpdate = () => {
+      // Refresh profile data immediately when updated via chat
+      fetchProfile();
+    };
+
+    window.addEventListener('profileUpdated', handleProfileUpdate);
+
+    return () => {
+      window.removeEventListener('profileUpdated', handleProfileUpdate);
+    };
   }, [fetchProfile]);
 
   // Listen for profile update events from chat
@@ -88,10 +110,30 @@ export default function ProfilePage() {
       fetchProfile();
     };
 
+    // Check if profile was updated while we were away (on page focus/visibility)
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        const lastUpdated = localStorage.getItem('profileLastUpdated');
+        if (lastUpdated) {
+          const lastUpdateTime = parseInt(lastUpdated);
+          const now = Date.now();
+          // If updated in the last 10 seconds, refresh
+          if (now - lastUpdateTime < 10000) {
+            fetchProfile();
+            // Clear the timestamp to avoid repeated refreshes
+            localStorage.removeItem('profileLastUpdated');
+          }
+        }
+      }
+    };
+
+    // Listen for real-time updates
     window.addEventListener('profileUpdated', handleProfileUpdate);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
       window.removeEventListener('profileUpdated', handleProfileUpdate);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [fetchProfile]);
 

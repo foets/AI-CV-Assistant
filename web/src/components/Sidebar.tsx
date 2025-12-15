@@ -59,8 +59,9 @@ export function Sidebar() {
         { role: "assistant", content: data.response || "Done." },
       ]);
 
-      // If profile was updated, emit custom event to refresh profile data
+      // If profile was updated, store flag and emit event
       if (data.profileUpdated) {
+        sessionStorage.setItem('profileNeedsRefresh', 'true');
         window.dispatchEvent(new CustomEvent('profileUpdated'));
       }
 
@@ -99,8 +100,8 @@ export function Sidebar() {
           <Link
             href="/"
             className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${pathname === "/"
-                ? "bg-white text-indigo-600 shadow-sm"
-                : "text-gray-500 hover:text-gray-700 hover:bg-gray-200/50"
+              ? "bg-white text-indigo-600 shadow-sm"
+              : "text-gray-500 hover:text-gray-700 hover:bg-gray-200/50"
               }`}
           >
             <FileText size={16} />
@@ -109,8 +110,8 @@ export function Sidebar() {
           <Link
             href="/profile"
             className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${pathname === "/profile"
-                ? "bg-white text-indigo-600 shadow-sm"
-                : "text-gray-500 hover:text-gray-700 hover:bg-gray-200/50"
+              ? "bg-white text-indigo-600 shadow-sm"
+              : "text-gray-500 hover:text-gray-700 hover:bg-gray-200/50"
               }`}
           >
             <User size={16} />
@@ -167,8 +168,8 @@ export function Sidebar() {
           >
             <div
               className={`max-w-[85%] px-4 py-3 text-sm leading-relaxed shadow-sm ${msg.role === "user"
-                  ? "bg-indigo-600 text-white rounded-2xl rounded-tr-sm"
-                  : "bg-white text-gray-700 border border-gray-100 rounded-2xl rounded-tl-sm"
+                ? "bg-indigo-600 text-white rounded-2xl rounded-tr-sm"
+                : "bg-white text-gray-700 border border-gray-100 rounded-2xl rounded-tl-sm"
                 }`}
             >
               {msg.content}
