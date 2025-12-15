@@ -1,13 +1,18 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { FileText, User, Send, Trash2, Loader2, Zap, MessageSquare } from "lucide-react";
+import { FileText, User, Send, Trash2, Loader2, Zap, MessageSquare, Plus } from "lucide-react";
 
 interface Message {
   role: "user" | "assistant";
   content: string;
+}
+
+// Generate a unique session ID
+function generateSessionId(): string {
+  return `session_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 }
 
 export function Sidebar() {
@@ -16,7 +21,31 @@ export function Sidebar() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
+  const [sessionId, setSessionId] = useState<string>("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Initialize session on mount
+  useEffect(() => {
+    // Check if there's an existing session in storage, or create new one
+    const storedSession = sessionStorage.getItem("cv_agent_session");
+    if (storedSession) {
+      setSessionId(storedSession);
+    } else {
+      const newSession = generateSessionId();
+      sessionStorage.setItem("cv_agent_session", newSession);
+      setSessionId(newSession);
+    }
+  }, []);
+
+  // Auto-resize textarea based on content
+  const adjustTextareaHeight = useCallback(() => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = "auto";
+      textarea.style.height = `${Math.min(textarea.scrollHeight, 150)}px`;
+    }
+  }, []);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -25,6 +54,10 @@ export function Sidebar() {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  useEffect(() => {
+    adjustTextareaHeight();
+  }, [input, adjustTextareaHeight]);
 
   useEffect(() => {
     fetch("http://localhost:2024/info")
@@ -36,10 +69,14 @@ export function Sidebar() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || isLoading) return;
+    if (!input.trim() || isLoading || !sessionId) return;
 
     const userMessage = input.trim();
     setInput("");
+    // Reset textarea height
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+    }
     setMessages((prev) => [...prev, { role: "user", content: userMessage }]);
     setIsLoading(true);
 
@@ -50,6 +87,7 @@ export function Sidebar() {
         body: JSON.stringify({
           message: userMessage,
           context: currentContext,
+          sessionId: sessionId,
         }),
       });
 
@@ -68,7 +106,7 @@ export function Sidebar() {
       }
 
       setIsConnected(true);
-    } catch (error) {
+    } catch {
       setMessages((prev) => [
         ...prev,
         { role: "assistant", content: "❌ Failed to connect to agent. Make sure LangGraph is running on port 2024." },
@@ -79,6 +117,31 @@ export function Sidebar() {
     }
   };
 
+  // Start a new chat session (clears messages AND creates new thread)
+  const startNewChat = async () => {
+    // Reset the thread on the server
+    if (sessionId) {
+      try {
+        await fetch("/api/chat", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sessionId }),
+        });
+      } catch (e) {
+        console.error("Failed to reset thread:", e);
+      }
+    }
+
+    // Create new session
+    const newSession = generateSessionId();
+    sessionStorage.setItem("cv_agent_session", newSession);
+    setSessionId(newSession);
+
+    // Clear UI messages
+    setMessages([]);
+  };
+
+  // Just clear the UI (keep thread for context)
   const clearChat = () => {
     setMessages([]);
   };
@@ -129,7 +192,7 @@ export function Sidebar() {
           <h2 className="font-semibold text-sm">Assistant Chat</h2>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <div className="flex items-center gap-1.5 px-2 py-1 bg-white border border-gray-200 rounded-full">
             <span className={`w-1.5 h-1.5 rounded-full ${isConnected ? "bg-green-500" : "bg-red-500"}`} />
             <span className="text-[10px] font-medium text-gray-500 uppercase tracking-wider">
@@ -137,9 +200,16 @@ export function Sidebar() {
             </span>
           </div>
           <button
+            onClick={startNewChat}
+            className="p-1.5 rounded-md hover:bg-indigo-100 text-indigo-500 hover:text-indigo-600 transition"
+            title="New chat (new thread)"
+          >
+            <Plus size={14} />
+          </button>
+          <button
             onClick={clearChat}
             className="p-1.5 rounded-md hover:bg-gray-200 text-gray-400 hover:text-gray-600 transition"
-            title="Clear chat"
+            title="Clear messages (keep thread)"
           >
             <Trash2 size={14} />
           </button>
@@ -158,7 +228,7 @@ export function Sidebar() {
               Ask me to help you create or tailor your CV.
               <br />
               <span className="text-xs mt-2 block bg-white px-3 py-2 rounded-lg border border-gray-100 text-indigo-600 font-mono">
-                "Create a CV for PM at Google"
+                &quot;Create a CV for PM at Google&quot;
               </span>
             </p>
           </div>
@@ -191,12 +261,20 @@ export function Sidebar() {
       {/* Input */}
       <div className="p-4 bg-white border-t border-gray-100">
         <form onSubmit={handleSubmit} className="relative">
-          <input
-            type="text"
+          <textarea
+            ref={textareaRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                handleSubmit(e);
+              }
+            }}
             placeholder="Type a message..."
-            className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-4 pr-12 py-3.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-inner"
+            rows={1}
+            className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-4 pr-12 py-3.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-inner resize-none overflow-hidden"
+            style={{ minHeight: "48px", maxHeight: "150px" }}
             disabled={isLoading}
           />
           <button
@@ -216,4 +294,3 @@ export function Sidebar() {
     </aside>
   );
 }
-

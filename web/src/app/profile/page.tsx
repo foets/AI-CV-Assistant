@@ -4,14 +4,15 @@ import { useState, useEffect, useCallback } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
-import { Save, RotateCcw, Download, Upload, Edit3, UserCircle, Check, Loader2 } from "lucide-react";
+import { Save, X, Download, Upload, Edit3, Eye, UserCircle, Loader2, RefreshCw } from "lucide-react";
 
 export default function ProfilePage() {
   const [content, setContent] = useState("");
-  const [isEditing, setIsEditing] = useState(false);
+  const [viewMode, setViewMode] = useState<"preview" | "edit">("preview");
   const [isSaving, setIsSaving] = useState(false);
-  const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [pdfUrl, setPdfUrl] = useState("");
+  const [pdfLoading, setPdfLoading] = useState(true);
 
   const editor = useEditor({
     extensions: [
@@ -21,7 +22,7 @@ export default function ProfilePage() {
       }),
     ],
     content: "",
-    editable: isEditing,
+    editable: true,
     immediatelyRender: false,
     editorProps: {
       attributes: {
@@ -65,6 +66,12 @@ export default function ProfilePage() {
       .trim();
   };
 
+  // Refresh PDF preview with cache busting
+  const refreshPdf = useCallback(() => {
+    setPdfLoading(true);
+    setPdfUrl(`/api/profile/pdf?regenerate=true&t=${Date.now()}`);
+  }, []);
+
   const fetchProfile = useCallback(async () => {
     try {
       const res = await fetch("/api/profile");
@@ -72,11 +79,13 @@ export default function ProfilePage() {
       const newContent = data.content || "";
       setContent(newContent);
       setIsLoaded(true);
+      // Refresh PDF when content is fetched
+      refreshPdf();
     } catch (error) {
       console.error("Failed to fetch profile:", error);
       setIsLoaded(true);
     }
-  }, []);
+  }, [refreshPdf]);
 
   useEffect(() => {
     fetchProfile();
@@ -95,18 +104,12 @@ export default function ProfilePage() {
     };
   }, [fetchProfile]);
 
+  // Update editor content when switching to edit mode or when content changes
   useEffect(() => {
-    if (editor && isLoaded && content) {
-      console.log('Editor useEffect triggered, updating content...');
+    if (editor && viewMode === "edit" && content) {
       editor.commands.setContent(markdownToHtml(content));
     }
-  }, [editor, isLoaded, content, markdownToHtml]);
-
-  useEffect(() => {
-    if (editor) {
-      editor.setEditable(isEditing);
-    }
-  }, [isEditing, editor]);
+  }, [editor, viewMode, content, markdownToHtml]);
 
   const handleSave = async () => {
     if (!editor) return;
@@ -124,8 +127,9 @@ export default function ProfilePage() {
 
       if (res.ok) {
         setContent(markdown);
-        setLastSaved(new Date());
-        setIsEditing(false);
+        setViewMode("preview");
+        // Refresh PDF after saving
+        setTimeout(() => refreshPdf(), 100);
       }
     } catch (error) {
       console.error("Failed to save:", error);
@@ -160,44 +164,63 @@ export default function ProfilePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content: text }),
       });
-      setLastSaved(new Date());
+      // Refresh PDF after upload
+      setTimeout(() => refreshPdf(), 100);
     };
     reader.readAsText(file);
   };
 
+  const switchToEdit = () => {
+    if (editor) {
+      editor.commands.setContent(markdownToHtml(content));
+    }
+    setViewMode("edit");
+  };
+
   return (
     <div className="h-full flex flex-col bg-gray-50/50">
-      {/* Top Bar */}
+      {/* Top Bar - Matching CV page structure */}
       <header className="bg-white border-b border-gray-200 px-8 py-5 flex items-center justify-between sticky top-0 z-20 shadow-sm">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-6">
+          {/* Profile Title */}
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-indigo-50 rounded-lg flex items-center justify-center border border-indigo-100">
               <UserCircle size={24} className="text-indigo-600" />
             </div>
             <div>
               <h1 className="text-lg font-semibold text-gray-900 tracking-tight leading-tight">My Profile</h1>
-              <p className="text-xs text-gray-500 font-medium">Manage your personal data</p>
+              <p className="text-xs text-gray-500 font-medium">Your professional data</p>
             </div>
           </div>
 
-          <div className="h-6 w-px bg-gray-200 mx-2" />
-
-          <div className="flex items-center gap-2">
-            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full ring-1 ring-inset ${isEditing ? "bg-amber-50 text-amber-700 ring-amber-600/20" : "bg-gray-50 text-gray-600 ring-gray-500/10"}`}>
-              <span className={`w-1.5 h-1.5 rounded-full ${isEditing ? "bg-amber-500" : "bg-gray-400"}`} />
-              {isEditing ? "Editing Mode" : "View Mode"}
-            </span>
-            {lastSaved && (
-              <span className="text-xs text-gray-400 flex items-center gap-1">
-                <Check size={12} />
-                Saved {lastSaved.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-              </span>
-            )}
+          {/* View Mode Toggle - Same as CV page */}
+          <div className="flex bg-gray-100/80 p-1 rounded-lg border border-gray-200">
+            <button
+              onClick={() => setViewMode("preview")}
+              className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-sm font-medium transition-all ${viewMode === "preview"
+                ? "bg-white text-indigo-600 shadow-sm ring-1 ring-black/5"
+                : "text-gray-500 hover:text-gray-700"
+                }`}
+            >
+              <Eye size={16} />
+              Preview
+            </button>
+            <button
+              onClick={switchToEdit}
+              className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-sm font-medium transition-all ${viewMode === "edit"
+                ? "bg-white text-indigo-600 shadow-sm ring-1 ring-black/5"
+                : "text-gray-500 hover:text-gray-700"
+                }`}
+            >
+              <Edit3 size={16} />
+              Edit
+            </button>
           </div>
         </div>
 
         <div className="flex items-center gap-3">
-          {isEditing ? (
+          {/* Edit mode actions */}
+          {viewMode === "edit" && (
             <>
               <button
                 onClick={handleSave}
@@ -208,31 +231,29 @@ export default function ProfilePage() {
                 {isSaving ? "Saving..." : "Save Changes"}
               </button>
               <button
-                onClick={() => {
-                  setIsEditing(false);
-                  if (editor) {
-                    editor.commands.setContent(markdownToHtml(content));
-                  }
-                }}
-                className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm text-gray-600 hover:bg-gray-100 hover:text-gray-900 border border-transparent"
+                onClick={() => setViewMode("preview")}
+                className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-200 text-sm text-gray-600 hover:bg-gray-100 hover:text-gray-900"
               >
-                <RotateCcw size={18} />
+                <X size={18} />
                 Cancel
               </button>
             </>
-          ) : (
-            <button
-              onClick={() => setIsEditing(true)}
-              className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm bg-indigo-600 text-white shadow-sm hover:bg-indigo-700 hover:shadow focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-            >
-              <Edit3 size={18} />
-              Edit Profile
-            </button>
           )}
 
           <div className="h-6 w-px bg-gray-200 mx-2" />
 
-          <label className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm bg-white text-gray-700 border border-gray-200 shadow-sm hover:bg-gray-50 hover:text-gray-900 hover:border-gray-300 cursor-pointer" title="Upload markdown file">
+          {/* Refresh button */}
+          <button
+            onClick={refreshPdf}
+            className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-200 text-sm bg-white text-gray-700 border border-gray-200 shadow-sm hover:bg-gray-50 hover:text-gray-900 hover:border-gray-300"
+            title="Refresh preview"
+          >
+            <RefreshCw size={18} className={pdfLoading ? "animate-spin" : ""} />
+            <span className="sr-only">Refresh</span>
+          </button>
+
+          {/* Import/Export buttons */}
+          <label className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-200 text-sm bg-white text-gray-700 border border-gray-200 shadow-sm hover:bg-gray-50 hover:text-gray-900 hover:border-gray-300 cursor-pointer" title="Upload markdown file">
             <input
               type="file"
               accept=".md,.txt"
@@ -245,7 +266,7 @@ export default function ProfilePage() {
 
           <button
             onClick={handleDownload}
-            className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm bg-white text-gray-700 border border-gray-200 shadow-sm hover:bg-gray-50 hover:text-gray-900 hover:border-gray-300"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-200 text-sm bg-white text-gray-700 border border-gray-200 shadow-sm hover:bg-gray-50 hover:text-gray-900 hover:border-gray-300"
             title="Download as markdown"
           >
             <Download size={18} />
@@ -254,21 +275,42 @@ export default function ProfilePage() {
         </div>
       </header>
 
-      {/* Editor */}
+      {/* Content Area */}
       <main className="flex-1 overflow-auto p-8">
-        <div className={`max-w-4xl mx-auto bg-white rounded-xl shadow-sm border border-gray-200 p-12 min-h-full transition-all duration-300 ${isEditing ? "ring-2 ring-indigo-500/10 shadow-md" : ""}`}>
-          {!isLoaded ? (
-            <div className="flex flex-col items-center justify-center h-64 text-gray-400 gap-3">
-              <Loader2 size={32} className="animate-spin text-indigo-200" />
-              <p className="text-sm font-medium">Loading profile data...</p>
+        {!isLoaded ? (
+          <div className="flex flex-col items-center justify-center h-full text-gray-400 gap-3">
+            <Loader2 size={32} className="animate-spin text-indigo-200" />
+            <p className="text-sm font-medium">Loading profile data...</p>
+          </div>
+        ) : viewMode === "preview" ? (
+          /* Preview Mode - PDF iframe like CV page */
+          <div className="max-w-6xl mx-auto h-full flex flex-col">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex-1 relative group transition-all hover:shadow-md">
+              {pdfLoading && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-white z-10">
+                  <Loader2 size={32} className="animate-spin text-indigo-400" />
+                  <p className="text-sm text-gray-500 mt-3">Generating preview...</p>
+                </div>
+              )}
+              <iframe
+                src={pdfUrl + "#toolbar=0&navpanes=0&view=FitH"}
+                className="w-full h-full border-0"
+                title="Profile Preview"
+                onLoad={() => setPdfLoading(false)}
+              />
             </div>
-          ) : (
-            <EditorContent
-              editor={editor}
-              className="prose prose-slate max-w-none focus:outline-none"
-            />
-          )}
-        </div>
+          </div>
+        ) : (
+          /* Edit Mode - TipTap editor */
+          <div className="max-w-4xl mx-auto h-full">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 min-h-full ring-2 ring-indigo-500/10 shadow-md">
+              <EditorContent
+                editor={editor}
+                className="prose prose-slate max-w-none focus:outline-none"
+              />
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );

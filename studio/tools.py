@@ -203,14 +203,22 @@ def generate_pdf(job_name: str) -> str:
         extra_args = ['--standalone', f'--pdf-engine={pdf_engine}']
         
         if pdf_engine in ['pdflatex', 'xelatex']:
+            # LaTeX-specific settings for proper list rendering
+            # Create a header file to ensure proper list formatting
+            latex_header = os.path.join(ASSETS_DIR, "cv_header.tex")
+            _ensure_latex_header(latex_header)
+            
             extra_args.extend([
                 '-V', 'geometry:margin=0.6in',
-                '-V', 'fontfamily=mathptmx',
                 '-V', 'fontsize=10pt',
-                '-V', 'linestretch=0.95'
+                '-V', 'linestretch=1.05',
+                '-H', latex_header,  # Include custom header for list styling
             ])
+        elif pdf_engine == 'wkhtmltopdf':
+            # wkhtmltopdf uses CSS
+            extra_args.extend(['--css', css_path])
         else:
-            # For weasyprint
+            # For weasyprint - best option for CSS support
             extra_args.extend(['--css', css_path])
         
         pypandoc.convert_file(
@@ -226,9 +234,45 @@ def generate_pdf(job_name: str) -> str:
         return f"Error generating PDF: {str(e)}"
 
 
+def _ensure_latex_header(header_path: str) -> None:
+    """Create LaTeX header file for proper CV formatting."""
+    header_content = r"""% CV LaTeX Header - Ensures proper list rendering
+\usepackage{enumitem}
+\usepackage{parskip}
+
+% Configure lists to not be compact/tight
+\setlist[itemize]{
+    topsep=2pt,
+    partopsep=0pt,
+    parsep=2pt,
+    itemsep=3pt,
+    leftmargin=18pt
+}
+
+% Ensure each list item is on its own line
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{3pt}\setlength{\parskip}{0pt}}
+
+% Better paragraph spacing
+\setlength{\parskip}{4pt}
+"""
+    # Only write if doesn't exist or needs update
+    os.makedirs(os.path.dirname(header_path), exist_ok=True)
+    with open(header_path, 'w') as f:
+        f.write(header_content)
+
+
 def _get_pdf_engine() -> str | None:
-    """Check which PDF engine is available."""
-    engines = ['weasyprint', 'pdflatex', 'xelatex', 'wkhtmltopdf']
+    """Check which PDF engine is available.
+    
+    Priority order:
+    1. weasyprint - Best CSS support, proper list rendering
+    2. wkhtmltopdf - Good CSS support
+    3. xelatex - Better font support than pdflatex
+    4. pdflatex - Fallback
+    """
+    # Prefer weasyprint for best CSS support and list rendering
+    engines = ['weasyprint', 'wkhtmltopdf', 'xelatex', 'pdflatex']
     
     for engine in engines:
         try:

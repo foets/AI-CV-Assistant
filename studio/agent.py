@@ -33,7 +33,7 @@ tools = [
 ]
 
 # Initialize LLM with tools
-llm = ChatOpenAI(model="gpt-5.2", temperature=0)
+llm = ChatOpenAI(model="gpt-5.2")
 llm_with_tools = llm.bind_tools(tools)
 
 # System message with strict rules
@@ -77,20 +77,40 @@ When you receive a message starting with `[PROFILE EDIT MODE]`:
    - Follow formatting rules (headers, bullets, emphasis)
    - Respect length guidelines
 
-3. **TAILORING ALLOWED**: You CAN:
+3. **CRITICAL FORMATTING RULES** (MUST FOLLOW EXACTLY):
+   - ONE SENTENCE PER BULLET POINT - never combine multiple sentences in a single bullet
+   - MAXIMUM 4 BULLET POINTS per job role - never exceed this
+   - ONE BULLET PER LINE - each bullet point must be on its own line
+   - NEVER merge multiple bullets into one line
+   - Each bullet MUST start with an action verb (Led, Managed, Delivered, Implemented, etc.)
+   - Keep CV to ~400-500 words total for single page fit
+   - Skills section: ONE LINE PER CATEGORY (Core, Tools, Languages) - add TWO SPACES at end of each line for line breaks
+   - **BLANK LINE REQUIRED**: Always add a blank line after section headers and between date/location line and bullets!
+   - **NO "N/A"**: Never write "N/A" for missing data - simply omit the field (e.g., if no year, don't include year)
+
+4. **TAILORING ALLOWED**: You CAN:
    - Reorder skills to prioritize job-relevant ones
    - Adjust the professional summary to match the target role
    - Emphasize relevant experience bullets
    - Incorporate keywords from the job description naturally
    - Choose which experiences to highlight
+   
+5. **SKILLS SECTION TAILORING** (Important):
+   - Analyze job description for specific tools, technologies, methodologies mentioned
+   - Prioritize user skills that MATCH job requirements - list these first
+   - Use the job's exact terminology when the user has equivalent skills
+   - CAN ADD skills/tools from job description if reasonably implied by user's experience
+     (e.g., user does AI automation → can add common AI/ML terms; user manages projects → can add standard PM methodologies)
+   - Omit skills irrelevant to the target role to keep focused
+   - Group skills logically based on what the job emphasizes (e.g., if job is AI-focused, lead with AI tools)
 
-4. **TAILORING NOT ALLOWED**: You CANNOT:
-   - Add skills the user doesn't have
-   - Invent achievements or metrics
+6. **TAILORING NOT ALLOWED**: You CANNOT:
+   - Invent achievements or metrics not supported by user data
    - Create fake job titles or companies
    - Add certifications not listed in user data
+   - Add skills completely unrelated to user's experience (but CAN add related tools implied by their work)
 
-5. **PDF GENERATION**: After every `write_cv` call, you MUST call `generate_pdf` 
+7. **PDF GENERATION**: After every `write_cv` call, you MUST call `generate_pdf` 
    to create the final PDF output.
 
 ## Response Style

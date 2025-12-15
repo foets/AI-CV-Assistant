@@ -23,6 +23,9 @@ data/output/*.html
 # User data (contains personal information)
 data/user.md
 
+# Generated profile preview
+data/profile_preview.pdf
+
 # IDE
 .vscode/
 .idea/

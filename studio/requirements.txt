@@ -5,4 +5,5 @@ langchain-core
 langchain-openai
 langchain-tavily
 pypandoc
+weasyprint  # Best PDF engine for proper list/CSS rendering
 python-dotenv

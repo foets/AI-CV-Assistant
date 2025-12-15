@@ -5,7 +5,7 @@ Transform your job search with AI-powered CV customization. Create professional,
 ![AI CV Assistant](https://img.shields.io/badge/AI-CV%20Assistant-blue?style=flat-square)
 ![Built with Next.js](https://img.shields.io/badge/Built%20with-Next.js-black?style=flat-square)
 
-![AI CV Assistant Interface](screenshot.png)
+![AI CV Assistant Interface](assets/screenshot.png)
 
 ## What is AI CV Assistant?
 

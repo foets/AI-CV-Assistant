@@ -2,24 +2,30 @@ import { NextRequest, NextResponse } from "next/server";
 
 const LANGGRAPH_URL = "http://localhost:2024";
 
-// Store thread ID in memory (in production, use a proper store)
-let threadId: string | null = null;
+// Thread management - tracks threads by session
+const threadStore = new Map<string, string>();
 
-async function ensureThread() {
+async function createNewThread(): Promise<string> {
+  const res = await fetch(`${LANGGRAPH_URL}/threads`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({}),
+  });
+  const data = await res.json();
+  return data.thread_id;
+}
+
+async function getOrCreateThread(sessionId: string): Promise<string> {
+  let threadId = threadStore.get(sessionId);
   if (!threadId) {
-    const res = await fetch(`${LANGGRAPH_URL}/threads`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({}),
-    });
-    const data = await res.json();
-    threadId = data.thread_id;
+    threadId = await createNewThread();
+    threadStore.set(sessionId, threadId);
   }
   return threadId;
 }
 
-async function sendToAgent(message: string, context: string) {
-  const tid = await ensureThread();
+async function sendToAgent(message: string, context: string, sessionId: string) {
+  const threadId = await getOrCreateThread(sessionId);
 
   // Add context prefix to message so agent knows which mode to use
   let fullMessage = message;
@@ -29,7 +35,7 @@ async function sendToAgent(message: string, context: string) {
     fullMessage = `[CV MODE]\n\n${message}`;
   }
 
-  const res = await fetch(`${LANGGRAPH_URL}/threads/${tid}/runs/wait`, {
+  const res = await fetch(`${LANGGRAPH_URL}/threads/${threadId}/runs/wait`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -61,16 +67,48 @@ async function sendToAgent(message: string, context: string) {
 
 export async function POST(req: NextRequest) {
   try {
-    const { message, context } = await req.json();
-    const response = await sendToAgent(message, context || "cv");
+    const { message, context, sessionId } = await req.json();
+
+    if (!sessionId) {
+      return NextResponse.json(
+        { response: "❌ Error: No session ID provided" },
+        { status: 400 }
+      );
+    }
+
+    const response = await sendToAgent(message, context || "cv", sessionId);
 
     return NextResponse.json({ response });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Chat error:", error);
+    const message = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(
-      { response: `❌ Error: ${error.message}` },
+      { response: `❌ Error: ${message}` },
       { status: 500 }
     );
   }
 }
 
+// DELETE endpoint to reset/clear a session's thread
+export async function DELETE(req: NextRequest) {
+  try {
+    const { sessionId } = await req.json();
+
+    if (sessionId) {
+      threadStore.delete(sessionId);
+      return NextResponse.json({ success: true, message: "Thread reset" });
+    }
+
+    return NextResponse.json(
+      { success: false, message: "No session ID provided" },
+      { status: 400 }
+    );
+  } catch (error) {
+    console.error("Reset error:", error);
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return NextResponse.json(
+      { success: false, message },
+      { status: 500 }
+    );
+  }
+}
