@@ -59,11 +59,12 @@ export function Sidebar() {
         { role: "assistant", content: data.response || "Done." },
       ]);
 
-      // If profile was updated, store flag and emit event
-      if (data.profileUpdated) {
-        console.log('Profile updated detected, emitting event...');
-        sessionStorage.setItem('profileNeedsRefresh', 'true');
-        window.dispatchEvent(new CustomEvent('profileUpdated'));
+      // Trigger profile refresh if we're on profile page and this might be a profile update
+      if (currentContext === "profile") {
+        // Small delay to let the backend finish writing
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent('profileRefresh'));
+        }, 500);
       }
 
       setIsConnected(true);

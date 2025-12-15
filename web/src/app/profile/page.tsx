@@ -70,38 +70,28 @@ export default function ProfilePage() {
       const res = await fetch("/api/profile");
       const data = await res.json();
       const newContent = data.content || "";
-      console.log('Fetched profile content:', newContent.substring(0, 100) + '...');
       setContent(newContent);
       setIsLoaded(true);
-
-      // Force editor update if it's already loaded
-      if (editor && isLoaded) {
-        console.log('Updating editor content...');
-        editor.commands.setContent(markdownToHtml(newContent));
-      }
     } catch (error) {
       console.error("Failed to fetch profile:", error);
       setIsLoaded(true);
     }
-  }, [editor, isLoaded, markdownToHtml]);
+  }, []);
 
   useEffect(() => {
-    // Initial profile load
     fetchProfile();
   }, [fetchProfile]);
 
-  // Listen for profile update events from chat
+  // Listen for profile refresh events from chat
   useEffect(() => {
-    const handleProfileUpdate = () => {
-      console.log('Profile update event received, refreshing...');
-      // Refresh profile data when chat updates it
+    const handleRefresh = () => {
       fetchProfile();
     };
 
-    window.addEventListener('profileUpdated', handleProfileUpdate);
+    window.addEventListener('profileRefresh', handleRefresh);
 
     return () => {
-      window.removeEventListener('profileUpdated', handleProfileUpdate);
+      window.removeEventListener('profileRefresh', handleRefresh);
     };
   }, [fetchProfile]);
 
@@ -274,7 +264,6 @@ export default function ProfilePage() {
             </div>
           ) : (
             <EditorContent
-              key={`editor-${content?.substring(0, 50)}`} // Force re-render when content changes
               editor={editor}
               className="prose prose-slate max-w-none focus:outline-none"
             />
