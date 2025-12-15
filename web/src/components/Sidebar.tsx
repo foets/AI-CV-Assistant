@@ -58,6 +58,12 @@ export function Sidebar() {
         ...prev,
         { role: "assistant", content: data.response || "Done." },
       ]);
+
+      // If profile was updated, emit custom event to refresh profile data
+      if (data.profileUpdated) {
+        window.dispatchEvent(new CustomEvent('profileUpdated'));
+      }
+
       setIsConnected(true);
     } catch (error) {
       setMessages((prev) => [

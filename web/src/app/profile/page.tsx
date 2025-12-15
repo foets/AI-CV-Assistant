@@ -81,6 +81,20 @@ export default function ProfilePage() {
     fetchProfile();
   }, [fetchProfile]);
 
+  // Listen for profile update events from chat
+  useEffect(() => {
+    const handleProfileUpdate = () => {
+      // Refresh profile data when chat updates it
+      fetchProfile();
+    };
+
+    window.addEventListener('profileUpdated', handleProfileUpdate);
+
+    return () => {
+      window.removeEventListener('profileUpdated', handleProfileUpdate);
+    };
+  }, [fetchProfile]);
+
   useEffect(() => {
     if (editor && isLoaded && content) {
       editor.commands.setContent(markdownToHtml(content));

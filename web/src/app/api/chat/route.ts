@@ -63,11 +63,18 @@ export async function POST(req: NextRequest) {
   try {
     const { message, context } = await req.json();
     const response = await sendToAgent(message, context || "cv");
-    return NextResponse.json({ response });
+
+    // Check if this was a successful profile update
+    const isProfileUpdate = context === "profile" && response.includes("✅ Profile updated");
+
+    return NextResponse.json({
+      response,
+      profileUpdated: isProfileUpdate
+    });
   } catch (error: any) {
     console.error("Chat error:", error);
     return NextResponse.json(
-      { response: `❌ Error: ${error.message}` },
+      { response: `❌ Error: ${error.message}`, profileUpdated: false },
       { status: 500 }
     );
   }
