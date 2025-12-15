@@ -20,6 +20,9 @@ data/output/*.md
 data/output/*.pdf
 data/output/*.html
 
+# User data (contains personal information)
+data/user.md
+
 # IDE
 .vscode/
 .idea/
