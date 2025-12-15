@@ -1,0 +1,12 @@
+# Copy this file to studio/.env and fill in your API keys
+
+# OpenAI API Key (required)
+OPENAI_API_KEY=your_openai_api_key_here
+
+# Tavily API Key (required for URL extraction)
+TAVILY_API_KEY=your_tavily_api_key_here
+
+# LangSmith (optional, for tracing and monitoring)
+LANGSMITH_API_KEY=your_langsmith_api_key_here
+LANGSMITH_TRACING=true
+LANGSMITH_PROJECT=cv-agent

@@ -1,0 +1,8 @@
+# LangGraph Agent Dependencies
+langgraph
+langgraph-prebuilt
+langchain-core
+langchain-openai
+langchain-tavily
+pypandoc
+python-dotenv

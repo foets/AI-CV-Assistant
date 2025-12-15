@@ -1,0 +1,65 @@
+# Environment variables - NEVER commit actual API keys!
+.env
+studio/.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Generated CVs (keep output directory but ignore contents)
+data/output/*.md
+data/output/*.pdf
+data/output/*.html
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Streamlit (legacy)
+.streamlit/
+
+# LangGraph
+.langgraph_api/
+
+# Node.js / Next.js
+node_modules/
+web/node_modules/
+web/.next/
+web/out/
+.next/
+
+# Build outputs
+dist/
+build/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Misc
+*.local
+
+# Legacy files (not part of current architecture)
+app.py
+verify_setup.py
+CONTEXT_FEATURE.md
