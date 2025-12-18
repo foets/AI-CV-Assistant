@@ -27,7 +27,7 @@ AI CV Assistant is your intelligent career companion that helps you create custo
 ### Prerequisites
 - A computer with internet access
 - OpenAI API key (for AI processing)
-- Tavily API key (for job URL analysis - optional)
+- FireCrawl API key (for job URL extraction) - get one at [firecrawl.dev](https://firecrawl.dev)
 
 ### 1. Get the Application
 
@@ -66,7 +66,7 @@ cp env_example.txt studio/.env
 Edit `studio/.env` with your keys:
 ```env
 OPENAI_API_KEY=sk-your-openai-key-here
-TAVILY_API_KEY=your-tavily-key-here  # Optional, for job URL analysis
+FIRECRAWL_API_KEY=your-firecrawl-key-here  # For job URL extraction
 ```
 
 ### 4. Add Your Professional Information
@@ -198,7 +198,7 @@ pip install weasyprint
 ## 🛡️ Privacy & Security
 
 - **Your data stays local**: Profile information and CVs are stored only on your computer
-- **API keys**: Only used to communicate with OpenAI and Tavily services
+- **API keys**: Only used to communicate with OpenAI and FireCrawl services
 - **No data collection**: We don't collect or store your personal information
 
 ## 🤝 Contributing

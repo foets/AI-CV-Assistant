@@ -6,12 +6,12 @@ const LANGGRAPH_URL = "http://localhost:2024";
 const threadStore = new Map<string, string>();
 
 async function createNewThread(): Promise<string> {
-  const res = await fetch(`${LANGGRAPH_URL}/threads`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({}),
-  });
-  const data = await res.json();
+    const res = await fetch(`${LANGGRAPH_URL}/threads`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({}),
+    });
+    const data = await res.json();
   return data.thread_id;
 }
 

@@ -3,7 +3,9 @@ langgraph
 langgraph-prebuilt
 langchain-core
 langchain-openai
-langchain-tavily
+langchain-community  # For FireCrawlLoader
+firecrawl-py  # FireCrawl API client
 pypandoc
 weasyprint  # Best PDF engine for proper list/CSS rendering
 python-dotenv
+langdetect  # For language detection in translate tool

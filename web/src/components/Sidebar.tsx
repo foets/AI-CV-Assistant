@@ -147,7 +147,7 @@ export function Sidebar() {
   };
 
   return (
-    <aside className="w-[360px] bg-white flex flex-col h-screen border-r border-gray-200 shadow-[2px_0_24px_-12px_rgba(0,0,0,0.05)] z-10">
+    <aside className="w-full bg-white flex flex-col h-screen border-r border-gray-200 shadow-[2px_0_24px_-12px_rgba(0,0,0,0.05)] z-10">
       {/* Header */}
       <div className="p-6 border-b border-gray-100">
         <div className="flex items-center gap-3 mb-6">
@@ -219,18 +219,45 @@ export function Sidebar() {
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-6 bg-gray-50/30">
         {messages.length === 0 && (
-          <div className="text-center py-12 px-6">
-            <div className="w-12 h-12 bg-white border border-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-sm">
-              <Send size={20} className="text-gray-400" />
+          <div className="py-6 px-4">
+            {/* Welcome Message */}
+            <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center">
+                  <Zap size={20} className="text-indigo-600" />
+                </div>
+                <div>
+                  <p className="font-semibold text-gray-900">Job Application Assistant</p>
+                  <p className="text-xs text-gray-500">Tailored CVs for every opportunity</p>
+                </div>
+              </div>
+
+              <p className="text-sm text-gray-600 mb-4 leading-relaxed">
+                I craft professional CVs based on your experience, optimized for specific job requirements.
+              </p>
+
+              <div className="space-y-3 text-sm">
+                <div className="flex items-start gap-2">
+                  <span className="text-indigo-500 font-bold">1.</span>
+                  <span className="text-gray-600">Your profile data is in the <span className="font-medium text-gray-900">Profile</span> tab</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-indigo-500 font-bold">2.</span>
+                  <span className="text-gray-600">Share a job URL or description</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-indigo-500 font-bold">3.</span>
+                  <span className="text-gray-600">I analyze requirements and create a tailored CV + PDF</span>
+                </div>
+              </div>
+
+              <div className="mt-5 pt-4 border-t border-gray-100">
+                <p className="text-xs text-gray-500 mb-2 font-medium">To get started, paste a job link in the chat:</p>
+                <div className="bg-gray-50 px-3 py-2 rounded-lg border border-gray-200 text-xs text-indigo-600 font-mono">
+                  https://jobs.example.com/senior-pm
+                </div>
+              </div>
             </div>
-            <p className="text-gray-900 font-semibold mb-2">Start a conversation</p>
-            <p className="text-sm text-gray-500 leading-relaxed">
-              Ask me to help you create or tailor your CV.
-              <br />
-              <span className="text-xs mt-2 block bg-white px-3 py-2 rounded-lg border border-gray-100 text-indigo-600 font-mono">
-                &quot;Create a CV for PM at Google&quot;
-              </span>
-            </p>
           </div>
         )}
         {messages.map((msg, i) => (

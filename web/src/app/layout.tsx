@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { Sidebar } from "@/components/Sidebar";
+import { ResizableLayout } from "@/components/ResizableLayout";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -18,15 +18,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <div className="flex h-screen">
-          {/* Sidebar with Chat */}
-          <Sidebar />
-
-          {/* Main Content */}
-          <main className="flex-1 overflow-auto bg-gray-50">
-            {children}
-          </main>
-        </div>
+        <ResizableLayout>
+          {children}
+        </ResizableLayout>
 
         {/* Remove Next.js dev badge */}
         <script

@@ -3,8 +3,9 @@
 # OpenAI API Key (required)
 OPENAI_API_KEY=your_openai_api_key_here
 
-# Tavily API Key (required for URL extraction)
-TAVILY_API_KEY=your_tavily_api_key_here
+# FireCrawl API Key (required for URL extraction)
+# Get your key at https://firecrawl.dev
+FIRECRAWL_API_KEY=your_firecrawl_api_key_here
 
 # LangSmith (optional, for tracing and monitoring)
 LANGSMITH_API_KEY=your_langsmith_api_key_here
